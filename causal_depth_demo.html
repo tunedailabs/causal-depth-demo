@@ -177,6 +177,20 @@
 
   /* ── Case brief ── */
   .case-brief { background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:12px;line-height:1.8;color:var(--muted) }
+
+  /* ── Admin Panel ── */
+  .admin-toggle { cursor: pointer; opacity: 0.3; font-size: 10px; }
+  .admin-toggle:hover { opacity: 1; }
+  .admin-panel { display: none; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-top: 12px; }
+  .admin-panel.open { display: block; }
+  .admin-panel h4 { font-size: 11px; color: var(--orange); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .admin-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .admin-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none; }
+  .admin-row input:focus { border-color: var(--accent); }
+  .admin-row button { padding: 8px 16px; font-size: 12px; white-space: nowrap; }
+  .admin-msg { font-size: 11px; min-height: 16px; margin-top: 4px; }
+  .admin-msg.ok { color: var(--green); }
+  .admin-msg.err { color: var(--red); }
 </style>
 </head>
 <body>
@@ -204,6 +218,19 @@
 <div class="status-bar" id="statusBar">
   <span><span class="status-dot dot-yellow" id="baseDot"></span><span id="baseStatus">Checking GPT-4o-mini...</span></span>
   <span><span class="status-dot dot-yellow" id="tunedDot"></span><span id="tunedStatus">Checking RungsX model...</span></span>
+  <span class="admin-toggle" onclick="document.getElementById('adminPanel').classList.toggle('open')" title="Admin settings">ADMIN</span>
+</div>
+
+<div class="admin-panel" id="adminPanel">
+  <h4>Tunnel Settings</h4>
+  <div class="admin-row">
+    <input type="text" id="adminSecret" placeholder="Admin secret" autocomplete="off">
+  </div>
+  <div class="admin-row">
+    <input type="text" id="tunnelUrl" placeholder="Paste new Colab tunnel URL (https://xxx.trycloudflare.com)">
+    <button onclick="updateTunnel()">Update Tunnel</button>
+  </div>
+  <div class="admin-msg" id="adminMsg"></div>
 </div>
 
 <div class="main">
@@ -681,6 +708,33 @@ function renderResults(data) {
 document.getElementById('questionInput').addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runAnalysis();
 });
+
+// ── Admin ──
+async function updateTunnel() {
+  const secret = document.getElementById('adminSecret').value.trim();
+  const url = document.getElementById('tunnelUrl').value.trim();
+  const msg = document.getElementById('adminMsg');
+  if (!secret || !url) { msg.className = 'admin-msg err'; msg.textContent = 'Enter both secret and URL'; return; }
+  try {
+    const r = await fetch('/admin/set-tunnel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
+      body: JSON.stringify({url: url})
+    });
+    const d = await r.json();
+    if (r.ok) {
+      msg.className = 'admin-msg ok';
+      msg.textContent = 'Tunnel updated — ' + (d.reachable ? 'reachable' : 'set but not reachable yet');
+      checkHealth();
+    } else {
+      msg.className = 'admin-msg err';
+      msg.textContent = d.detail || 'Failed';
+    }
+  } catch(e) {
+    msg.className = 'admin-msg err';
+    msg.textContent = 'Error: ' + e.message;
+  }
+}
 
 // Startup
 tryResume();
