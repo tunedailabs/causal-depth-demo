@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Causal Depth Analyzer — TunedAI Labs</title>
+<title>Causal Depth Analyzer</title>
 <style>
   :root {
     --bg: #0f0f13;
@@ -15,43 +15,14 @@
     --yellow: #f59e0b;
     --text: #e2e2ee;
     --muted: #6b6b8a;
-    --orange: #f97316;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; min-height: 100vh; }
 
-  /* ── Auth Gate ── */
-  .auth-overlay {
-    position: fixed; inset: 0; background: var(--bg); z-index: 1000;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .auth-overlay.hidden { display: none; }
-  .auth-box {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 40px; max-width: 400px; width: 90%; text-align: center;
-  }
-  .auth-box h2 { font-size: 18px; margin-bottom: 6px; }
-  .auth-box .subtitle { color: var(--muted); font-size: 12px; margin-bottom: 24px; }
-  .auth-box input {
-    width: 100%; background: var(--bg); border: 1px solid var(--border);
-    color: var(--text); padding: 12px 16px; border-radius: 6px; font-family: inherit;
-    font-size: 14px; text-align: center; outline: none; margin-bottom: 12px;
-  }
-  .auth-box input:focus { border-color: var(--accent); }
-  .auth-box button {
-    width: 100%; background: var(--accent); color: white; border: none; padding: 12px;
-    border-radius: 6px; font-family: inherit; font-size: 14px; cursor: pointer; font-weight: 600;
-  }
-  .auth-box button:hover { opacity: 0.85; }
-  .auth-error { color: var(--red); font-size: 12px; margin-top: 8px; min-height: 18px; }
-  .auth-logo { font-size: 28px; font-weight: 800; margin-bottom: 16px; }
-  .auth-logo span { color: var(--orange); }
-
-  /* ── Layout ── */
-  header { padding: 24px 40px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-  header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  header { padding: 32px 40px 24px; border-bottom: 1px solid var(--border); }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
   header h1 span { color: var(--accent); }
-  .header-brand { font-size: 11px; color: var(--orange); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  header p { color: var(--muted); font-size: 13px; margin-top: 6px; }
 
   .status-bar { display: flex; gap: 16px; padding: 10px 40px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; }
   .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; }
@@ -60,10 +31,9 @@
   .dot-yellow { background: var(--yellow); animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-  .main { padding: 24px 40px; max-width: 1400px; margin: 0 auto; }
+  .main { padding: 32px 40px; max-width: 1400px; margin: 0 auto; }
 
-  /* ── Input ── */
-  .input-section { margin-bottom: 20px; }
+  .input-section { margin-bottom: 28px; }
   .input-section label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
   textarea {
     width: 100%; background: var(--surface); border: 1px solid var(--border);
@@ -91,59 +61,26 @@
   }
   .tier-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(108,99,255,0.12); }
 
-  /* ── Prompt toggle ── */
-  .prompt-toggle { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
-  .prompt-toggle label { font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
-  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
-  .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border); border-radius: 24px; transition: 0.2s; }
-  .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
-  .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
-  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); background: white; }
-  .prompt-status { font-size: 11px; font-weight: 600; }
-  .prompt-status.on { color: var(--accent); }
-  .prompt-status.off { color: var(--red); }
-  .prompt-preview { margin-top: 8px; padding: 10px 14px; background: rgba(108,99,255,0.06); border: 1px solid rgba(108,99,255,0.15); border-radius: 6px; font-size: 11px; line-height: 1.6; color: var(--muted); max-height: 120px; overflow-y: auto; display: none; }
-  .prompt-preview.visible { display: block; }
-
-  /* ── Question Bank ── */
-  .question-bank { margin-top: 16px; }
-  .qb-header {
-    display: flex; align-items: center; justify-content: space-between; cursor: pointer;
-    padding: 10px 16px; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; user-select: none;
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .example-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
   }
-  .qb-header:hover { border-color: var(--accent); }
-  .qb-header h4 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-  .qb-header .arrow { color: var(--accent); font-size: 14px; transition: transform 0.2s; }
-  .qb-header.open .arrow { transform: rotate(180deg); }
-  .qb-body { display: none; margin-top: 8px; }
-  .qb-body.open { display: block; }
-  .qb-category { margin-bottom: 12px; }
-  .qb-category h5 { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; padding: 6px 0; }
-  .qb-item {
-    padding: 10px 14px; margin-bottom: 4px; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 6px; font-size: 12px; line-height: 1.6; color: #c4c4da; cursor: pointer;
-    transition: all 0.15s;
-  }
-  .qb-item:hover { border-color: var(--accent); background: rgba(108,99,255,0.06); }
-  .qb-item .qb-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .example-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Results ── */
   .results { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 28px; }
   @media (max-width: 900px) { .results { grid-template-columns: 1fr; } }
 
   .model-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   .model-card.winner { border-color: var(--green); box-shadow: 0 0 20px rgba(34,197,94,0.1); }
   .model-card.loser { border-color: rgba(239,68,68,0.3); }
-  .model-card.offline { border-color: var(--yellow); opacity: 0.7; }
 
   .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
   .card-header h3 { font-size: 13px; font-weight: 600; }
   .card-header .tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; }
   .tag-base  { background: rgba(239,68,68,0.15); color: #f87171; }
   .tag-tuned { background: rgba(34,197,94,0.15);  color: #4ade80; }
-  .tag-noprompt { background: rgba(249,115,22,0.15); color: var(--orange); }
 
   .depth-gauge { padding: 16px 18px; border-bottom: 1px solid var(--border); }
   .gauge-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; display: flex; justify-content: space-between; }
@@ -174,86 +111,76 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .error-msg { color: var(--red); font-size: 13px; padding: 12px 0; }
-
-  /* ── Case brief ── */
-  .case-brief { background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:12px;line-height:1.8;color:var(--muted) }
-
-  /* ── Admin Panel ── */
-  .admin-toggle { cursor: pointer; opacity: 0.3; font-size: 10px; }
-  .admin-toggle:hover { opacity: 1; }
-  .admin-panel { display: none; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-top: 12px; }
-  .admin-panel.open { display: block; }
-  .admin-panel h4 { font-size: 11px; color: var(--orange); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-  .admin-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-  .admin-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 12px; outline: none; }
-  .admin-row input:focus { border-color: var(--accent); }
-  .admin-row button { padding: 8px 16px; font-size: 12px; white-space: nowrap; }
-  .admin-msg { font-size: 11px; min-height: 16px; margin-top: 4px; }
-  .admin-msg.ok { color: var(--green); }
-  .admin-msg.err { color: var(--red); }
 </style>
 </head>
 <body>
 
-<!-- Auth Gate -->
-<div class="auth-overlay" id="authOverlay">
-  <div class="auth-box">
-    <div class="auth-logo">Tuned<span>AI</span> Labs</div>
-    <h2>Causal Depth Analyzer</h2>
-    <p class="subtitle">Enter the demo password to continue</p>
-    <input type="password" id="authPassword" placeholder="Password" autocomplete="off" onkeydown="if(event.key==='Enter')submitAuth()">
-    <button onclick="submitAuth()">Enter Demo</button>
-    <div class="auth-error" id="authError"></div>
+<!-- AUTH GATE -->
+<div class="auth-overlay" id="authOverlay" style="position:fixed;inset:0;background:#0f0f13;z-index:9999;display:flex;align-items:center;justify-content:center">
+  <div style="text-align:center;max-width:400px;padding:3rem">
+    <div style="font-size:1.3rem;font-weight:700;color:#e2e2ee;margin-bottom:0.5rem">Tuned<span style="color:#f97316">AI</span> Labs</div>
+    <h2 style="font-size:1rem;color:#6b6b8a;font-weight:400;margin-bottom:2rem">Causal Depth Demo</h2>
+    <input type="password" id="authCode" placeholder="Access code" onkeydown="if(event.key==='Enter')checkAuth()" style="width:100%;padding:0.85rem 1rem;border:1px solid #2a2a38;border-radius:8px;background:#1a1a22;color:#e2e2ee;font-size:1rem;outline:none;margin-bottom:1rem;text-align:center;letter-spacing:0.1em;font-family:inherit">
+    <button onclick="checkAuth()" style="width:100%;padding:0.85rem;border:none;border-radius:8px;background:#f97316;color:#fff;font-size:1rem;font-weight:600;cursor:pointer;font-family:inherit">Enter</button>
+    <div class="auth-error" id="authError" style="color:#ef4444;font-size:0.85rem;margin-top:0.75rem;min-height:1.2em"></div>
   </div>
 </div>
-
-<!-- Main App (hidden until auth) -->
-<div id="appMain" style="display:none">
+<script>
+function checkAuth(){
+  var c=document.getElementById('authCode').value.trim();
+  if(c==='tunedai'){
+    document.getElementById('authOverlay').style.display='none';
+    sessionStorage.setItem('ks_auth','1');
+    sessionStorage.setItem('vantage_auth','1');
+    sessionStorage.setItem('ks_agent_auth','1');
+    sessionStorage.setItem('depth_auth','1');
+    sessionStorage.setItem('master_auth','1');
+  } else if(c==='depth2026'){
+    document.getElementById('authOverlay').style.display='none';
+    sessionStorage.setItem('depth_auth','1');
+  } else {
+    document.getElementById('authError').textContent='Invalid access code.';
+  }
+}
+if(sessionStorage.getItem('depth_auth')==='1'||sessionStorage.getItem('master_auth')==='1') document.getElementById('authOverlay').style.display='none';
+</script>
 
 <header>
-  <h1>Causal <span>Depth</span> Analyzer</h1>
-  <span class="header-brand">TunedAI Labs</span>
+  <h1>Rungs <span>Causal Depth</span> Demo</h1>
+  <p>Prompt engineering vs. training — two approaches to causal depth. <strong style="color:var(--text)">State v. Howell</strong> · Yamhill County, Oregon · CR100629</p>
 </header>
 
 <div class="status-bar" id="statusBar">
-  <span><span class="status-dot dot-yellow" id="baseDot"></span><span id="baseStatus">Checking GPT-4o-mini...</span></span>
+  <span><span class="status-dot dot-yellow" id="baseDot"></span><span id="baseStatus">Checking Claude + Rungs prompt...</span></span>
   <span><span class="status-dot dot-yellow" id="tunedDot"></span><span id="tunedStatus">Checking RungsX model...</span></span>
-  <span class="admin-toggle" onclick="document.getElementById('adminPanel').classList.toggle('open')" title="Admin settings">ADMIN</span>
-</div>
-
-<div class="admin-panel" id="adminPanel">
-  <h4>Tunnel Settings</h4>
-  <div style="margin-bottom:12px">
-    <a href="https://colab.research.google.com/drive/11kzDtR8yWQimm84UFCyY9x3FIvXt5E9F?usp=drive_link" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;border:1px solid var(--accent);padding:6px 14px;border-radius:6px;display:inline-block">Open Colab Notebook &rarr;</a>
-    <span style="font-size:11px;color:var(--muted);margin-left:8px">Run all cells, copy the tunnel URL, paste below</span>
-  </div>
-  <div class="admin-row">
-    <input type="text" id="adminSecret" placeholder="Admin secret" autocomplete="off">
-  </div>
-  <div class="admin-row">
-    <input type="text" id="tunnelUrl" placeholder="Paste new Colab tunnel URL (https://xxx.trycloudflare.com)">
-    <button onclick="updateTunnel()">Update Tunnel</button>
-  </div>
-  <div class="admin-msg" id="adminMsg"></div>
 </div>
 
 <div class="main">
 
   <div class="input-section">
-    <div class="case-brief">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:16px;font-size:12px;line-height:1.8;color:var(--muted)">
       <span style="color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:11px">Case Brief</span><br>
-      <span style="color:var(--text)">Jennifer Clare Howell</span> &middot; DOB redacted &middot; Yamhill County, Oregon<br>
+      <span style="color:var(--text)">Jennifer Clare Howell</span> · DOB redacted · Yamhill County, Oregon<br>
       <strong style="color:var(--text)">Charges:</strong>
-      (1) Mfg/Deliver Controlled Substance within 1,000' of school — Felony A &middot; ORS 475.904 &nbsp;|&nbsp;
+      (1) Mfg/Deliver Controlled Substance within 1,000′ of school — Felony A · ORS 475.904 &nbsp;|&nbsp;
       (2) Possession of Meth — Felony C (dismissed) &nbsp;|&nbsp;
       (3) Endanger Welfare of Minor — Misdemeanor A<br>
-      <strong style="color:var(--text)">Disposition:</strong> Guilty plea 12/27/2010 &middot; Counts 1 &amp; 3 convicted, Count 2 dismissed &middot;
-      34 months Oregon DOC &middot; 3 years post-prison supervision &middot; License revoked 6 months<br>
-      <strong style="color:var(--text)">Timeline:</strong> Arraigned 10/28/2010 &middot; Bail $75,000 &middot; Release denied 11/16/2010 &middot; 60-day rule waived 11/30/2010 &middot; Plea entered ~60 days after arraignment
+      <strong style="color:var(--text)">Disposition:</strong> Guilty plea 12/27/2010 · Counts 1 &amp; 3 convicted, Count 2 dismissed ·
+      34 months Oregon DOC · 3 years post-prison supervision · License revoked 6 months<br>
+      <strong style="color:var(--text)">Timeline:</strong> Arraigned 10/28/2010 · Bail $75,000 · Release denied 11/16/2010 · 60-day rule waived 11/30/2010 · Plea entered ~60 days after arraignment
     </div>
 
     <label>Question</label>
-    <textarea id="questionInput" placeholder="Ask a causal question about this case, or choose one from the question bank below..."></textarea>
+    <textarea id="questionInput" placeholder="Ask a causal question about this case…&#10;&#10;e.g. Did pre-trial detention at $75,000 bail cause Jennifer Howell to accept the plea deal?"></textarea>
+
+    <div class="examples">
+      <span style="font-size:12px;color:var(--muted);align-self:center">Try:</span>
+      <button class="example-btn" onclick="setExample(0)">Trial outcome — what if she went to trial?</button>
+      <button class="example-btn" onclick="setExample(1)">School zone — what if outside 1,000′?</button>
+      <button class="example-btn" onclick="setExample(2)">Detention → plea pressure</button>
+      <button class="example-btn" onclick="setExample(3)">Count 2 dismissed — why?</button>
+      <button class="example-btn" onclick="setExample(4)">Post-release trajectory</button>
+    </div>
 
     <div class="controls">
       <button id="analyzeBtn" onclick="runAnalysis()">Analyze Depth</button>
@@ -265,249 +192,27 @@
         <span class="tier-chip active" data-tier="T4" onclick="toggleTier(this)">Simulation</span>
       </div>
     </div>
-
-    <div class="prompt-toggle">
-      <label class="toggle-switch">
-        <input type="checkbox" id="promptToggle" checked onchange="updatePromptToggle()">
-        <span class="toggle-slider"></span>
-      </label>
-      <label for="promptToggle">Rungs system prompt for GPT-4o-mini</label>
-      <span class="prompt-status on" id="promptStatus">ON</span>
-      <span style="font-size:11px;color:var(--muted);margin-left:auto;cursor:pointer" onclick="document.getElementById('promptPreview').classList.toggle('visible')">[show prompt]</span>
-    </div>
-    <div class="prompt-preview" id="promptPreview">
-      <strong style="color:var(--accent)">System prompt injected on every GPT-4o-mini call:</strong><br><br>
-      You are a causal analyst using the Rungs framework. For every question you MUST structure your answer across all four tiers — do not skip any tier:<br><br>
-      TIER 1 — Observation: What the data, records, or facts directly show. Correlations, patterns, documented outcomes.<br>
-      TIER 2 — Mechanism: The causal pathway. How and why did this happen.<br>
-      TIER 3 — Projection: Given the mechanism, what are the expected forward effects.<br>
-      TIER 4 — Simulation: Counterfactual analysis. What would have happened under different conditions.<br><br>
-      Label each tier clearly. Be specific and analytical, not generic.
-    </div>
-
-    <!-- Question Bank -->
-    <div class="question-bank">
-      <div class="qb-header" onclick="toggleQBank()">
-        <h4>Question Bank — Click to load a question</h4>
-        <span class="arrow">&#9660;</span>
-      </div>
-      <div class="qb-body" id="qbBody">
-
-        <div class="qb-category">
-          <h5>Side-by-Side Demo Prompts (Short, high-impact)</h5>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Killer Demo — 16 words</div>
-            She made meth near a school. Her kid was there. She got 34 months. Was justice served?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Sentencing Disparity</div>
-            A woman was convicted of manufacturing methamphetamine within 1000 feet of an elementary school while her child was present. Why did the judge give her 34 months in prison for the drug charge but only a suspended sentence for child endangerment?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Plea Deal Analysis</div>
-            The prosecution dismissed a Felony C meth possession charge against a defendant who pled guilty to Felony A drug manufacturing. Was that a good deal for the defendant?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Bail Denial</div>
-            A mother was denied bail after being arrested for making meth near a school. Her $75,000 bail was continued and she sat in jail for 60 days before pleading guilty. Was the bail denial justified?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Policy — School Zone Enhancement</div>
-            Oregon law makes drug manufacturing within 1000 feet of a school a Felony A instead of a Felony B. Does this law actually protect children?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Recidivism / Forward Projection</div>
-            After serving 34 months in Oregon state prison for drug manufacturing, a woman will have 3 years of post-prison supervision, $1,287 in fines and fees, a 6-month driver's license suspension, and a Felony A on her record. What happens to her?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Speed of Resolution</div>
-            A drug case went from arrest to guilty plea in exactly 60 days. Why so fast?
-          </div>
-        </div>
-
-        <div class="qb-category">
-          <h5>Causal Reasoning Challenges (10 Tiers)</h5>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">1. Confounder</div>
-            She sat in jail for 60 days on $75,000 bail she couldn't post, then pled guilty to a Felony A. Did she plead guilty because she was guilty, or because she was in jail?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">2. Mechanism Isolation</div>
-            The meth lab was 900 feet from a school. If it had been 1,100 feet away, the charge drops from Felony A to Felony B and she likely gets 16 months instead of 34. What is the 200 feet actually doing in this sentence?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">3. Counterfactual Precision</div>
-            If the judge had set bail at $10,000 instead of $75,000, and she had posted it and gone home to her child, would this case have ended the same way?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">4. Intervention vs Observation</div>
-            Oregon is considering removing all school-proximity sentence enhancements for drug crimes. Based on what you see in this case, what would actually change if they did?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">5. Selection Bias</div>
-            The defendant couldn't afford $75,000 bail. She was appointed a public defender. She pled guilty in 60 days and got 34 months in state prison. If she had been wealthy enough to post bail and hire private counsel, what parts of this outcome change and what parts stay the same?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">6. Reverse Causation</div>
-            The sentencing guidelines showed Criminal History Category C. She got 34 months. Does her criminal history explain the sentence, or does the system that produced her criminal history explain both?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">7. Mediation</div>
-            The state dismissed the Felony C possession charge in exchange for a guilty plea on the Felony A manufacturing charge. Walk through the causal chain: how did this bargain change her outcome compared to what would have happened at trial?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">8. Multiple Causation</div>
-            She was convicted of two crimes from the same incident: manufacturing meth near a school (34 months prison) and endangering her child (suspended sentence, 9 months jail credit for time served). Same facts. Same day. Same judge. Why did the same conduct produce a 25-month sentencing gap?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">9. Proportionality</div>
-            34 months in state prison. $1,287 in fines and fees. 3 years post-prison supervision. 6-month license suspension. Felony A on her permanent record. DNA in the state database. For manufacturing methamphetamine in a house near a school with her child present. Is the punishment calibrated to the actual harm caused?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">10. Forward Projection</div>
-            She serves 34 months. She's released at age 48 with a Felony A record, $1,287 in debt, no driver's license for 6 months, and 3 years of post-prison supervision. Her child is now 3 years older. Map what happens next.
-          </div>
-        </div>
-
-        <div class="qb-category">
-          <h5>Detailed Case Analysis Questions</h5>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Plea Bargain Deep Dive</div>
-            A defendant in Oregon was charged with three counts: (1) Manufacturing/Delivering a Controlled Substance within 1000 feet of a School (Felony A, ORS 475.904), (2) Possession of Methamphetamine (Felony C, ORS 475.894), and (3) Endangering the Welfare of a Minor (Misdemeanor A, ORS 163.575). The defendant pled guilty to Counts 1 and 3. Count 2 was dismissed. What causal factors most likely drove the prosecution to dismiss the Felony C possession charge as part of this plea agreement?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Sentencing Guidelines vs Plea</div>
-            In the same case, the defendant received 34 months in the Oregon Department of Corrections for Count 1 (Manufacturing/Delivering a Controlled Substance near a school) but only a suspended sentence with 9 months jail (credit for time served) on Count 3 (Endangering Welfare of a Minor). The sentencing guidelines showed Severity 8, Criminal History C. Why was there such a large sentencing disparity between these two convictions, and what does this tell us about how Oregon's sentencing guidelines interact with plea agreements?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Pre-Trial Release Analysis</div>
-            A defendant charged with Manufacturing/Delivering a Controlled Substance within 1000 feet of a School was held on $75,000 security release. On November 16, 2010, the court held a pre-trial release hearing and denied release, continuing the $75,000 requirement. The defendant had been in custody since October 27, 2010. What factors would a judge likely weigh in denying pre-trial release on these charges, and what does the denial signal about the court's risk assessment?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Proximity Enhancement</div>
-            Oregon law (ORS 475.904) elevates drug manufacturing or delivery to a Felony A if it occurs within 1000 feet of a school. Without this proximity enhancement, the underlying conduct would typically be a Felony B under ORS 475.890. What is the causal logic behind school-proximity enhancements in drug sentencing, and what are the likely downstream effects — both intended and unintended?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">60-Day Resolution Timeline</div>
-            This case was filed on October 28, 2010, and fully resolved (plea, sentencing, judgment) by December 27, 2010 — exactly 60 days. During that time, the defendant went through arraignment, a preliminary hearing, an indictment, three pre-trial conferences, a pre-plea conference, and a plea/sentencing hearing. The defendant also waived the 60-day speedy trial requirement. What does this timeline tell us about the incentive structures at play for the defendant, the prosecution, and the court?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Child Welfare Chain</div>
-            A defendant was simultaneously convicted of Manufacturing a Controlled Substance near a School and Endangering the Welfare of a Minor. The minor endangerment charge received a suspended sentence while the drug charge received 34 months in state prison. From a child welfare perspective, analyze the causal chain: what circumstances would lead to both charges arising from the same set of facts, and what are the likely long-term consequences for the minor involved?
-          </div>
-
-          <div class="qb-item" onclick="loadQ(this)">
-            <div class="qb-label">Post-Release Failure Points</div>
-            The defendant was sentenced to 34 months in the Oregon Department of Corrections, followed by 3 years of post-prison supervision, a 6-month driver's license revocation, and a DNA blood draw requirement. She also has $1,287 in fines, fees, and assessments (including $865 in attorney fees). Analyze the post-release structure: what is each component designed to achieve, and what are the most likely failure points that could lead to recidivism or re-incarceration?
-          </div>
-        </div>
-
-      </div>
-    </div>
-
   </div>
 
   <div id="resultsArea"></div>
 
 </div>
-</div>
 
 <script>
-// ── Auth ──
-let authToken = sessionStorage.getItem('demoToken') || '';
-
-async function submitAuth() {
-  const pw = document.getElementById('authPassword').value.trim();
-  if (!pw) return;
-  try {
-    const r = await fetch('/auth/verify', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({password: pw})
-    });
-    const d = await r.json();
-    if (r.ok && d.token) {
-      authToken = d.token;
-      sessionStorage.setItem('demoToken', authToken);
-      showApp();
-    } else {
-      document.getElementById('authError').textContent = d.error || 'Wrong password';
-    }
-  } catch(e) {
-    document.getElementById('authError').textContent = 'Connection error';
-  }
-}
-
-function showApp() {
-  document.getElementById('authOverlay').classList.add('hidden');
-  document.getElementById('appMain').style.display = '';
-  checkHealth();
-}
-
-function authHeaders() {
-  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken };
-}
-
-// Check if we have a stored token and it's still valid
-async function tryResume() {
-  if (!authToken) return;
-  try {
-    const r = await fetch('/health', { headers: { 'Authorization': 'Bearer ' + authToken } });
-    if (r.ok) { showApp(); return; }
-  } catch(e) {}
-  sessionStorage.removeItem('demoToken');
-  authToken = '';
-}
-
-// ── Question Bank ──
-function toggleQBank() {
-  const header = document.querySelector('.qb-header');
-  const body = document.getElementById('qbBody');
-  header.classList.toggle('open');
-  body.classList.toggle('open');
-}
-
-function loadQ(el) {
-  // Get text content excluding the label div
-  const label = el.querySelector('.qb-label');
-  let text = el.textContent;
-  if (label) text = text.replace(label.textContent, '').trim();
-  document.getElementById('questionInput').value = text;
-  document.getElementById('questionInput').focus();
-  // Scroll to top
-  window.scrollTo({top: 0, behavior: 'smooth'});
-}
-
-// ── Case Context ──
 const CASE_CONTEXT = `Case: State of Oregon v. Jennifer Clare Howell, CR100629, Yamhill County.
 Charges: (1) Manufacturing/Delivering a controlled substance within 1,000 feet of a school — Felony A, ORS 475.904; (2) Possession of Meth — Felony C; (3) Endangering the welfare of a minor — Misdemeanor A.
 Disposition: Guilty plea entered 12/27/2010. Counts 1 and 3 convicted; Count 2 dismissed. Sentence: 34 months Oregon DOC, 3 years post-prison supervision, 6-month license revocation, $250 fine plus fees.
 Timeline: Arraigned 10/28/2010. Bail set at $75,000. Release denied 11/16/2010. Defendant waived 60-day rule 11/30/2010. Plea and sentencing hearing 12/27/2010 — approximately 60 days after arraignment.
 
 Question: `;
+
+const EXAMPLES = [
+  CASE_CONTEXT + "If Jennifer Howell had gone to trial on all three counts instead of pleading guilty, what would most likely have happened?",
+  CASE_CONTEXT + "If the manufacturing and delivery offense had occurred more than 1,000 feet from the school, how would the charges and sentence have differed?",
+  CASE_CONTEXT + "Did the pre-trial detention under a $75,000 bail she could not meet cause Jennifer Howell to accept the plea deal? Walk through the causal mechanism.",
+  CASE_CONTEXT + "The possession of meth charge (Count 2) was dismissed at sentencing while Counts 1 and 3 were convicted. What caused that outcome, and what were the downstream effects on her sentence?",
+  CASE_CONTEXT + "Given Jennifer Howell's 34-month DOC sentence, 3-year post-prison supervision, and the nature of the conviction, what is the most likely trajectory for her after release?",
+];
 
 const TIER_NAMES = {
   T1: 'Observation',
@@ -516,19 +221,11 @@ const TIER_NAMES = {
   T4: 'Simulation',
 };
 
+function setExample(i) {
+  document.getElementById('questionInput').value = EXAMPLES[i];
+}
+
 function toggleTier(el) { el.classList.toggle('active'); }
-
-function updatePromptToggle() {
-  const on = document.getElementById('promptToggle').checked;
-  const status = document.getElementById('promptStatus');
-  status.textContent = on ? 'ON' : 'OFF';
-  status.className = 'prompt-status ' + (on ? 'on' : 'off');
-  if (!on) document.getElementById('promptPreview').classList.remove('visible');
-}
-
-function getUsePrompt() {
-  return document.getElementById('promptToggle').checked;
-}
 
 function getRequiredTiers() {
   return Array.from(document.querySelectorAll('.tier-chip.active')).map(el => el.dataset.tier);
@@ -540,10 +237,8 @@ async function checkHealth() {
     const d = await r.json();
     document.getElementById('baseDot').className  = 'status-dot ' + (d.base_model  ? 'dot-green' : 'dot-red');
     document.getElementById('tunedDot').className = 'status-dot ' + (d.tuned_model ? 'dot-green' : 'dot-red');
-    document.getElementById('baseStatus').textContent  = d.base_model  ? 'GPT-4o-mini: online'  : 'GPT-4o-mini: offline';
-    document.getElementById('tunedStatus').textContent = d.tuned_model
-      ? 'RungsX model: online'
-      : (d.tunnel_url ? 'RungsX model: tunnel down' : 'RungsX model: not configured');
+    document.getElementById('baseStatus').textContent  = d.base_model  ? 'Claude + Rungs prompt: online'  : 'Claude + Rungs prompt: offline';
+    document.getElementById('tunedStatus').textContent = d.tuned_model ? 'RungsX model: online'            : 'RungsX model: offline';
   } catch(e) {}
 }
 
@@ -556,7 +251,7 @@ function scoreClass(score) {
 function renderTierBadges(byTier) {
   return Object.entries(byTier).map(([t, done]) => {
     const cls  = done ? 'badge-done' : 'badge-skip';
-    const icon = done ? '\u2713' : '\u2717';
+    const icon = done ? '✓' : '✗';
     return `<span class="tier-badge ${cls}">${icon} ${TIER_NAMES[t] || t}</span>`;
   }).join('');
 }
@@ -570,8 +265,6 @@ function highlightTiers(text) {
     .replace(/(tier\s*4|simulation|what if|would have|scenario)/gi, '<span class="tier-highlight">$1</span>');
 }
 
-let abortController = null;
-
 async function runAnalysis() {
   const question = document.getElementById('questionInput').value.trim();
   if (!question) return;
@@ -579,52 +272,25 @@ async function runAnalysis() {
   const btn = document.getElementById('analyzeBtn');
   btn.disabled = true;
 
-  abortController = new AbortController();
-
   document.getElementById('resultsArea').innerHTML = `
     <div class="loading">
       <div class="spinner"></div><br>
-      Running both models in parallel...<br>
-      <span style="font-size:11px;color:var(--muted)">~30-60 seconds</span><br>
-      <button style="margin-top:16px;background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 16px;font-size:11px" onclick="cancelAnalysis()">Cancel</button>
+      Running both models in parallel…<br>
+      <span style="font-size:11px;color:var(--muted)">~30-45 seconds</span>
     </div>`;
 
   try {
     const resp = await fetch('/analyze', {
       method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({question, required_tiers, use_prompt: getUsePrompt()}),
-      signal: abortController.signal
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question, required_tiers})
     });
-    if (resp.status === 401) {
-      sessionStorage.removeItem('demoToken');
-      authToken = '';
-      document.getElementById('authOverlay').classList.remove('hidden');
-      document.getElementById('appMain').style.display = 'none';
-      document.getElementById('resultsArea').innerHTML = '';
-      btn.disabled = false;
-      return;
-    }
-    if (resp.status === 429) {
-      document.getElementById('resultsArea').innerHTML = `<div class="error-msg">Rate limit exceeded. Please wait before running another analysis.</div>`;
-      btn.disabled = false;
-      return;
-    }
     const data = await resp.json();
     renderResults(data);
   } catch(e) {
-    if (e.name === 'AbortError') {
-      document.getElementById('resultsArea').innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">Analysis cancelled.</div>`;
-    } else {
-      document.getElementById('resultsArea').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
-    }
+    document.getElementById('resultsArea').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
   }
   btn.disabled = false;
-  abortController = null;
-}
-
-function cancelAnalysis() {
-  if (abortController) abortController.abort();
 }
 
 function renderResults(data) {
@@ -632,18 +298,14 @@ function renderResults(data) {
   const tuned = data.tuned;
   const delta = data.depth_delta;
   const tunedWins = tuned.score.depth_score >= base.score.depth_score;
-  const tunedOffline = tuned.text.startsWith('[RungsX') || tuned.text.startsWith('[Error');
-
-  const baseLabel = data.use_prompt ? 'GPT-4o-mini + Rungs (Prompt)' : 'GPT-4o-mini (No Prompt)';
-  const baseTag = data.use_prompt ? '<span class="tag tag-base">Prompt engineering</span>' : '<span class="tag tag-noprompt">No system prompt</span>';
 
   const html = `
     <div class="results">
 
       <div class="model-card ${!tunedWins ? 'winner' : 'loser'}">
         <div class="card-header">
-          <h3>${baseLabel}</h3>
-          ${baseTag}
+          <h3>Claude + Rungs (Prompt)</h3>
+          <span class="tag tag-base">Prompt engineering</span>
         </div>
         <div class="depth-gauge">
           <div class="gauge-label">Depth Score <span>${base.score.depth_score}%</span></div>
@@ -653,53 +315,44 @@ function renderResults(data) {
         </div>
         <div class="tier-badges">${renderTierBadges(base.score.by_tier || {})}</div>
         <div class="response-text">${highlightTiers(base.text)}</div>
-        <div class="timing">\u23F1 ${base.time}s &middot; ${base.score.completed}/${base.score.required} tiers reached</div>
+        <div class="timing">⏱ ${base.time}s · ${base.score.completed}/${base.score.required} tiers reached</div>
       </div>
 
-      <div class="model-card ${tunedOffline ? 'offline' : (tunedWins ? 'winner' : 'loser')}">
+      <div class="model-card ${tunedWins ? 'winner' : 'loser'}">
         <div class="card-header">
           <h3>RungsX Model</h3>
-          <span class="tag tag-tuned">In the weights</span>
+          <span class="tag tag-tuned">Rungs in the weights</span>
         </div>
         <div class="depth-gauge">
-          <div class="gauge-label">Depth Score <span>${tunedOffline ? '--' : tuned.score.depth_score + '%'}</span></div>
+          <div class="gauge-label">Depth Score <span>${tuned.score.depth_score}%</span></div>
           <div class="gauge-bar">
-            <div class="gauge-fill ${tunedOffline ? '' : scoreClass(tuned.score.depth_score)}" style="width:${tunedOffline ? 0 : tuned.score.depth_score}%"></div>
+            <div class="gauge-fill ${scoreClass(tuned.score.depth_score)}" style="width:${tuned.score.depth_score}%"></div>
           </div>
         </div>
-        <div class="tier-badges">${tunedOffline ? '<span class="tier-badge badge-skip">Model offline</span>' : renderTierBadges(tuned.score.by_tier || {})}</div>
+        <div class="tier-badges">${renderTierBadges(tuned.score.by_tier || {})}</div>
         <div class="response-text">${highlightTiers(tuned.text)}</div>
-        <div class="timing">\u23F1 ${tuned.time}s &middot; ${tunedOffline ? 'offline' : tuned.score.completed + '/' + tuned.score.required + ' tiers reached'}</div>
+        <div class="timing">⏱ ${tuned.time}s · ${tuned.score.completed}/${tuned.score.required} tiers reached</div>
       </div>
 
       <div class="delta-banner">
-        ${tunedOffline ? `
-          <div class="delta-number" style="color:var(--yellow)">--</div>
-          <div class="delta-label">
-            <strong>RungsX model is offline</strong>
-            The Colab notebook needs to be running for the right-side comparison. Left side (GPT-4o-mini) is working normally.
-          </div>
-        ` : delta > 0 ? `
+        ${delta > 0 ? `
           <div class="delta-number" style="color:var(--green)">+${delta}%</div>
           <div class="delta-label">
-            <strong>${data.use_prompt ? 'Training matches prompting — without the prompt' : 'Training beats no-prompt by ' + delta + '%'}</strong>
-            ${data.use_prompt
-              ? 'RungsX produces the same depth as GPT-4o-mini with a 150-word system prompt — but needs zero prompting.'
-              : 'Without the Rungs system prompt, GPT-4o-mini missed ' + (tuned.score.completed - base.score.completed) + ' tier(s). The LoRA produces structure by default.'}
+            <strong>Training beats prompting by ${delta}%</strong>
+            RungsX reached ${tuned.score.completed - base.score.completed} more tier(s) than Claude+Rungs prompt.
+            ${delta >= 30 ? 'The prompt alone left significant analytical depth on the table.' : 'Training produced measurable depth gains on this question.'}
           </div>
         ` : delta < 0 ? `
           <div class="delta-number" style="color:var(--red)">${delta}%</div>
           <div class="delta-label">
-            <strong>GPT-4o-mini ${data.use_prompt ? 'with Rungs prompt' : ''} scored higher on this question</strong>
-            Try a counterfactual question — that's where the training gap is most pronounced.
+            <strong>Claude+Rungs prompt matched or exceeded on this question</strong>
+            Try a counterfactual question (example 1 or 2) — that's where the training gap is most pronounced.
           </div>
         ` : `
-          <div class="delta-number" style="color:var(--green)">TIE</div>
+          <div class="delta-number" style="color:var(--muted)">—</div>
           <div class="delta-label">
-            <strong>${data.use_prompt ? 'Same depth — but one needed 150 words of instructions' : 'Both models reached the same depth'}</strong>
-            ${data.use_prompt
-              ? 'GPT-4o-mini required a system prompt with explicit tier instructions. RungsX produced the same structure with zero prompting. Toggle the prompt OFF to see the difference.'
-              : 'Try enabling all four tiers and asking a full scenario question.'}
+            <strong>Both models reached the same depth</strong>
+            Try enabling all four tiers and asking a full scenario question.
           </div>
         `}
       </div>
@@ -713,36 +366,8 @@ document.getElementById('questionInput').addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runAnalysis();
 });
 
-// ── Admin ──
-async function updateTunnel() {
-  const secret = document.getElementById('adminSecret').value.trim();
-  const url = document.getElementById('tunnelUrl').value.trim();
-  const msg = document.getElementById('adminMsg');
-  if (!secret || !url) { msg.className = 'admin-msg err'; msg.textContent = 'Enter both secret and URL'; return; }
-  try {
-    const r = await fetch('/admin/set-tunnel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
-      body: JSON.stringify({url: url})
-    });
-    const d = await r.json();
-    if (r.ok) {
-      msg.className = 'admin-msg ok';
-      msg.textContent = 'Tunnel updated — ' + (d.reachable ? 'reachable' : 'set but not reachable yet');
-      checkHealth();
-    } else {
-      msg.className = 'admin-msg err';
-      msg.textContent = d.detail || 'Failed';
-    }
-  } catch(e) {
-    msg.className = 'admin-msg err';
-    msg.textContent = 'Error: ' + e.message;
-  }
-}
-
-// Startup
-tryResume();
-setInterval(checkHealth, 15000);
+checkHealth();
+setInterval(checkHealth, 10000);
 </script>
 </body>
 </html>
